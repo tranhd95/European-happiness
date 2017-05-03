@@ -2,6 +2,7 @@
     max-width: 800px;
     height: 700px;
     display: flex;
+    margin: 0 auto;
 }
 
 path {
@@ -16,4 +17,13 @@ path {
 
 .selectedCountry {
     fill: blue;
+}
+
+svg {
+    border: solid 1px;
+}
+
+#infoBox {
+    margin: 0 auto;
+    text-align: center;
 }
