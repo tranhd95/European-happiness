@@ -17,11 +17,15 @@ let svg = d3.select("body")
             .attr("width", "100%");
 
 // Load the geoJson and render the visualization
-d3.json("./src/js/europe.json", function (json) {
+d3.json("./src/js/europe.json", (json) => {
     let geojson = topojson.feature(json, json.objects.europe);
-    let mapVisualization = visualization(geojson, opts);
-    mapVisualization.selection(svg);
-    mapVisualization();
+    d3.csv("./src/csv/europe.csv", (data) => {
+        let mapVisualization = visualization(geojson, opts);
+        mapVisualization.selection(svg);
+        mapVisualization.data(data);
+        mapVisualization();
+    });
 });
+
 
 

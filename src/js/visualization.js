@@ -13,6 +13,12 @@ export function visualization(geoJson, opts) {
 
     let svgElement;
     let selectedCountry;
+    let data;
+
+    render.data = (d) => {
+        data = d;
+        return render;
+    };
 
     // Selection setter
     render.selection = (s) => {
