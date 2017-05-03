@@ -14,7 +14,9 @@ let svg = d3.select("body")
             .append("svg")
             .attr("viewBox", `0 0 ${opts.width} ${opts.height}`)
             .attr("preserveAspectRatio", "xMidYMid")
-            .attr("width", "100%");
+            .attr("width", "100%")
+            .attr("height", "100%");
+
 
 // Load the geoJson and render the visualization
 d3.json("./src/js/europe.json", (json) => {

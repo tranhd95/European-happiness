@@ -12,7 +12,6 @@ export function visualization(geoJson, opts) {
                        .translate([opts.width / 2, opts.height / 2]);
 
     let svgElement;
-    let selectedCountry;
     let data;
 
     render.data = (d) => {
@@ -62,9 +61,8 @@ export function visualization(geoJson, opts) {
 
     // Event handler for clicking on the country
     function onCountryClickHandler() {
-        selectedCountry = this;
-        highlightSelectedCountry(selectedCountry);
-        showInfoBox(selectedCountry);
+        highlightSelectedCountry(this);
+        showInfoBox(this);
     }
 
     // Highlights the selected country
@@ -78,8 +76,32 @@ export function visualization(geoJson, opts) {
     }
 
     function showInfoBox(country) {
+        let selectedCountryName = d3.select(country).attr("id");
+        let isDataAvailable = false;
+        let countryData;
+        for (let i = 0; i < data.length; i++) {
+            if (data[i].Country == selectedCountryName) {
+                isDataAvailable = true;
+                countryData = data[i];
+                break;
+            }
+        }
+
+        if (!isDataAvailable) {
+            console.log("No data.");
+        }
+
         d3.select("#infoBox")
-          .text(country.id);
+            .html(`Country: ${countryData.Country}<br>
+                    Region: ${countryData.Region}<br>
+                    GDP per capita: ${countryData.Economy}<br>
+                    Happiness: ${countryData["Happiness Score"]} <br>
+                    Corruption: ${countryData.Corruption} <br>
+                    Family: ${countryData.Family} <br>
+                    Health: ${countryData.Health} <br>
+                    Freedom: ${countryData.Freedom} <br>
+                    Generosity: ${countryData.Generosity}`);
+
     }
 
     // Event listeners for hovering
