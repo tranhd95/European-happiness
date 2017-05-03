@@ -1,0 +1,24 @@
+{
+  "name": "europe_map",
+  "version": "1.0.0",
+  "description": "Interaction with SVG map",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack-dev-server --watch",
+    "build:prod": "webpack -p",
+    "minify": "json-minify ./src/js/e.json > e.json"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "css-loader": "^0.28.1",
+    "d3": "^4.8.0",
+    "extract-text-webpack-plugin": "^2.1.0",
+    "json-minify": "^1.0.0",
+    "style-loader": "^0.17.0",
+    "topojson": "^3.0.0",
+    "webpack": "^2.4.1",
+    "webpack-dev-server": "^2.4.5"
+  }
+}

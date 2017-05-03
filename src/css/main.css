@@ -1,0 +1,19 @@
+#mapContainer {
+    max-width: 800px;
+    height: 800px;
+    display: flex;
+}
+
+path {
+    fill: gray;
+    stroke: #a6a6a6;
+    stroke-width: 0.5px;
+}
+
+.hoverCountry {
+    fill: cyan;
+}
+
+.selectedCountry {
+    fill: blue;
+}
