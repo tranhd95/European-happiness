@@ -3,18 +3,17 @@ import * as d3 from "d3";
 import * as topojson from "topojson";
 
 let opts = {
-    width: 600,
-    height: 400,
-    scale: 400
-}
+    width: 800,
+    height: 500,
+    scale: 500
+};
 
 let svg = d3.select("body")
             .append("div").attr("id", "mapContainer")
             .append("svg")
             .attr("viewBox", `0 0 ${opts.width} ${opts.height}`)
             .attr("preserveAspectRatio", "xMidYMid")
-            .attr("width", "100%")
-            .attr("height", "100%");
+            .attr("width", "100%");
 
 // Load the geoJson and render the visualization
 d3.json("./src/js/europe.json", function (json) {
@@ -29,7 +28,7 @@ function visualization(geoJson, opts) {
 
     let projection = d3.geoMercator()
                        .scale(opts.scale)
-                       .center([16, 49])
+                       .center([16, 57])
                        .translate([opts.width / 2, opts.height / 2]);
 
     let svgElement;
@@ -78,8 +77,8 @@ function visualization(geoJson, opts) {
     // Event handler for clicking on the country
     function onCountryClickHandler() {
         selectedCountry = this;
-        console.log(d3.select(this).attr("id"));
         highlightSelectedCountry(selectedCountry);
+        showInfoBox(selectedCountry);
     }
 
     // Highlights the selected country
@@ -90,6 +89,11 @@ function visualization(geoJson, opts) {
         // Fill the country
         d3.select(country)
             .classed("selectedCountry", true);
+    }
+
+    function showInfoBox(country) {
+        d3.select("#infoBox")
+            .text(country.id);
     }
 
     // Event listeners for hovering
@@ -124,4 +128,5 @@ function visualization(geoJson, opts) {
 
     return render;
 }
+
 
