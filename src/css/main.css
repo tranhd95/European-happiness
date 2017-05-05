@@ -2,7 +2,6 @@
     max-width: 800px;
     height: 700px;
     display: flex;
-    margin: 0 auto;
 }
 
 path {
@@ -24,6 +23,14 @@ svg {
 }
 
 #infoBox {
-    margin: 0 auto;
-    text-align: center;
+    float: left;
+}
+
+.domain {
+    fill: none;
+    stroke: none;
+}
+
+#infoBox > svg {
+    border: none;
 }

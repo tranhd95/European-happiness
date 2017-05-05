@@ -9,19 +9,42 @@ export function visualization(geoJson, opts) {
     let projection = d3.geoMercator()
                        .scale(opts.scale)
                        .center([16, 57])
-                       .translate([opts.width / 2, opts.height / 2]);
+                       .translate([opts.mapWidth / 2, opts.mapHeight / 2]);
 
     let svgElement;
     let data;
+    let maxValues;
 
     render.data = (d) => {
         data = d;
+
+        maxValues = {
+            "Economy": d3.max(data, (d) => {
+                return +d.Economy;
+            }),
+            "Family": d3.max(data, (d) => {
+                return +d.Family;
+            }),
+            "Health": d3.max(data, (d) => {
+                return +d.Health;
+            }),
+            "Freedom": d3.max(data, (d) => {
+                return +d.Freedom;
+            }),
+            "Corruption": d3.max(data, (d) => {
+                return +d.Corruption;
+            }),
+            "Generosity": d3.max(data, (d) => {
+                return +d.Generosity;
+            })
+        };
+        console.log(maxValues);
         return render;
     };
 
     // Selection setter
     render.selection = (s) => {
-        if(!arguments.length) return svgElement;
+        if (!arguments.length) return svgElement;
         svgElement = s;
         return render;
     };
@@ -80,28 +103,14 @@ export function visualization(geoJson, opts) {
         let isDataAvailable = false;
         let countryData;
         for (let i = 0; i < data.length; i++) {
-            if (data[i].Country == selectedCountryName) {
+            if (data[i].Country === selectedCountryName) {
                 isDataAvailable = true;
                 countryData = data[i];
                 break;
             }
         }
-
-        if (!isDataAvailable) {
-            console.log("No data.");
-        }
-
-        d3.select("#infoBox")
-            .html(`Country: ${countryData.Country}<br>
-                    Region: ${countryData.Region}<br>
-                    GDP per capita: ${countryData.Economy}<br>
-                    Happiness: ${countryData["Happiness Score"]} <br>
-                    Corruption: ${countryData.Corruption} <br>
-                    Family: ${countryData.Family} <br>
-                    Health: ${countryData.Health} <br>
-                    Freedom: ${countryData.Freedom} <br>
-                    Generosity: ${countryData.Generosity}`);
-
+        //#TODO No data available case
+        barChart(countryData);
     }
 
     // Event listeners for hovering
@@ -132,6 +141,71 @@ export function visualization(geoJson, opts) {
     function resetFill() {
         svgElement.selectAll("path")
                   .classed("selectedCountry", false);
+    }
+
+    function barChart(countryData) {
+
+        let data = [
+            {"variable": "Economy", "value": +countryData.Economy, "max": maxValues.Economy},
+            {"variable": "Corruption", "value": +countryData.Corruption, "max": maxValues.Corruption},
+            {"variable": "Generosity", "value": +countryData.Generosity, "max": maxValues.Generosity},
+            {"variable": "Family", "value": +countryData.Family, "max": maxValues.Family},
+            {"variable": "Health", "value": +countryData.Health, "max": maxValues.Health},
+            {"variable": "Freedom", "value": +countryData.Freedom, "max": maxValues.Freedom}
+        ];
+
+        // Remove previous country data
+        d3.select("#infoBox")
+          .select("svg")
+          .remove();
+
+        d3.select("#countryName")
+            .text(countryData.Country);
+
+        // Add svg element to #infoBox
+        let svg = d3.select("#infoBox")
+                    .append("svg")
+                    .attr("width", opts.infoBoxWidth)
+                    .attr("height", opts.infoBoxHeight);
+
+        let margin = {top: 20, right: 20, bottom: 30, left: 80};
+        let width = opts.infoBoxWidth - margin.left - margin.right;
+        let height = opts.infoBoxHeight - margin.top - margin.bottom;
+
+        let yScale = d3.scaleBand()
+                       .range([height, 0])
+                       .domain(data.map(function (d) {
+                           return d.variable;
+                       }))
+                       .padding(0.1);
+
+        let g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        function xScale(value, max) {
+            let x = d3.scaleLinear().range([0, width]);
+            x.domain([0, max]);
+            return x(value);
+        }
+
+        g.append("g")
+         .attr("class", "y axis")
+         .call(d3.axisLeft(yScale));
+
+        g.selectAll(".bar")
+         .data(data)
+         .enter().append("rect")
+         .attr("class", "bar")
+         .attr("x", 0)
+         .attr("height", yScale.bandwidth())
+         .attr("y", function (d) {
+             return yScale(d.variable);
+         })
+         .transition()
+         .duration(700)
+         .ease(d3.easeExp)
+         .attr("width", function (d) {
+             return xScale(d.value, d.max);
+         });
     }
 
     return render;
