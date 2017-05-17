@@ -38,7 +38,7 @@ export function visualization(geoJson, opts) {
                 return +d.Generosity;
             })
         };
-        console.log(maxValues);
+
         return render;
     };
 
@@ -98,19 +98,21 @@ export function visualization(geoJson, opts) {
           .classed("selectedCountry", true);
     }
 
-    function showInfoBox(country) {
-        let selectedCountryName = d3.select(country).attr("id");
-        let isDataAvailable = false;
-        let countryData;
+    function showInfoBox(countryElement) {
+        let selectedCountryName = d3.select(countryElement).attr("id");
+        let countryData = getCountryData(selectedCountryName);
+        barChart(selectedCountryName, countryData);
+    }
+
+    // Finds the country data with country name
+    // Returns null if no data found otherwise returns country data
+    function getCountryData(countryName) {
         for (let i = 0; i < data.length; i++) {
-            if (data[i].Country === selectedCountryName) {
-                isDataAvailable = true;
-                countryData = data[i];
-                break;
+            if (data[i].Country === countryName) {
+                return data[i];
             }
         }
-        //#TODO No data available case
-        barChart(countryData);
+        return null;
     }
 
     // Event listeners for hovering
@@ -129,6 +131,7 @@ export function visualization(geoJson, opts) {
     function hoverOverCountryHandler() {
         d3.select(this)
           .classed("hoverCountry", true);
+        //#TODO tooltip
     }
 
     // Event handler for hovering out of the country
@@ -143,7 +146,18 @@ export function visualization(geoJson, opts) {
                   .classed("selectedCountry", false);
     }
 
-    function barChart(countryData) {
+    function barChart(countryName, countryData) {
+
+        if (countryData === null) {
+            //#TODO No data available case (Andorra, San Marino, Vatican)
+            d3.select("#countryName")
+              .text(countryName + " NO DATA");
+            // Remove previous country data
+            d3.select("#infoBox")
+              .select("svg")
+              .remove();
+            return;
+        }
 
         let data = [
             {"variable": "Economy", "value": +countryData.Economy, "max": maxValues.Economy},
@@ -160,7 +174,7 @@ export function visualization(geoJson, opts) {
           .remove();
 
         d3.select("#countryName")
-            .text(countryData.Country);
+            .text(countryName + " Happiness: " + countryData.Happiness);
 
         // Add svg element to #infoBox
         let svg = d3.select("#infoBox")
