@@ -11,7 +11,7 @@ export function visualization(geoJson, opts) {
                        .center([16, 57])
                        .translate([opts.mapWidth / 2, opts.mapHeight / 2]);
 
-    let svgElement;
+    let mapSvgElement;
     let data;
     let maxValues;
 
@@ -44,20 +44,20 @@ export function visualization(geoJson, opts) {
 
     // Selection setter
     render.selection = (s) => {
-        if (!arguments.length) return svgElement;
-        svgElement = s;
+        if (!arguments.length) return mapSvgElement;
+        mapSvgElement = s;
         return render;
     };
 
     // Main render method
     function render() {
         drawMap();
-        interaction();
+        mapInteraction();
     }
 
     // Draws the map
     function drawMap() {
-        svgElement.selectAll("path")
+        mapSvgElement.selectAll("path")
                   .data(geoJson.features)
                   .enter()
                   .append("path")
@@ -66,7 +66,7 @@ export function visualization(geoJson, opts) {
     }
 
     // All event listeners
-    function interaction() {
+    function mapInteraction() {
         clickEvents();
         hoverEvents();
     }
@@ -74,11 +74,12 @@ export function visualization(geoJson, opts) {
     // Event listeners for clicking events
     function clickEvents() {
         clickOnCountry();
+        clickOnBar();
     }
 
     // Event listener for clicking on specific country
     function clickOnCountry() {
-        svgElement.selectAll("path")
+        mapSvgElement.selectAll("path")
                   .on("click", onCountryClickHandler);
     }
 
@@ -86,6 +87,39 @@ export function visualization(geoJson, opts) {
     function onCountryClickHandler() {
         highlightSelectedCountry(this);
         showInfoBox(this);
+    }
+
+    // Event listener for clicking on category bar (Happiness, Health, ...)
+    function clickOnBar() {
+        d3.select("#infoBox")
+            .selectAll(".barBg")
+            .on("click", onBarClickHandler);
+        d3.select("#infoBox").selectAll(".bar")
+            .on("click", onBarClickHandler);
+    }
+
+    // Event handler for clicking on the category bar
+    function onBarClickHandler() {
+        let barId = this.id;
+        fooMap(barId);
+    }
+
+    function fooMap(category) {
+
+        mapSvgElement
+            .selectAll("path")
+            .style("fill", function () {
+                let country = d3.select(this).attr('id');
+                let countryData = getCountryData(country);
+                if (countryData != null) {
+                    let value = countryData[category];
+                    value = value * 255 / maxValues[category];
+                    return "rgb(" + Math.round(value) + ", 0, 0)";
+                } else {
+                    return "grey";
+                }
+            });
+        hoverEvents();
     }
 
     // Highlights the selected country
@@ -122,16 +156,18 @@ export function visualization(geoJson, opts) {
 
     // Event handlers for hovering over the country
     function hoverOverCountry() {
-        svgElement.selectAll("path")
+        mapSvgElement.selectAll("path")
                   .on("mouseover", hoverOverCountryHandler)
                   .on("mouseout", hoverOutCountryHandler);
     }
 
     // Event handler for hovering over the country
     function hoverOverCountryHandler() {
+
         d3.select(this)
           .classed("hoverCountry", true);
         //#TODO tooltip
+        let countryData = getCountryData(this.id);
     }
 
     // Event handler for hovering out of the country
@@ -142,14 +178,15 @@ export function visualization(geoJson, opts) {
 
     // Resets fill color of all countries
     function resetFill() {
-        svgElement.selectAll("path")
-                  .classed("selectedCountry", false);
+        mapSvgElement.selectAll("path")
+                  .classed("selectedCountry", false)
+            .style("fill", null);
     }
 
     function barChart(countryName, countryData) {
 
         if (countryData === null) {
-            //#TODO No data available case (Andorra, San Marino, Vatican)
+            //#TODO No data available case (Andorra, San Marino, Vatican, ...)
             d3.select("#countryName")
               .text(countryName + " NO DATA");
             // Remove previous country data
@@ -173,8 +210,13 @@ export function visualization(geoJson, opts) {
           .select("svg")
           .remove();
 
+        // Happiness
         d3.select("#countryName")
-            .text(countryName + " Happiness: " + countryData.Happiness);
+            .text(countryName)
+            .style("text-align", "center") //TODO css class
+            .append("p")
+            .text("Happiness score: " + countryData.Happiness)
+            .style("text-align", "center");
 
         // Add svg element to #infoBox
         let svg = d3.select("#infoBox")
@@ -182,7 +224,7 @@ export function visualization(geoJson, opts) {
                     .attr("width", opts.infoBoxWidth)
                     .attr("height", opts.infoBoxHeight);
 
-        let margin = {top: 20, right: 20, bottom: 30, left: 80};
+        let margin = {top: 50, right: 20, bottom: 30, left: 100};
         let width = opts.infoBoxWidth - margin.left - margin.right;
         let height = opts.infoBoxHeight - margin.top - margin.bottom;
 
@@ -202,13 +244,56 @@ export function visualization(geoJson, opts) {
         }
 
         g.append("g")
-         .attr("class", "y axis")
+         .attr("class", "yaxis")
+         .style("font-size", "18px")
          .call(d3.axisLeft(yScale));
+
+        g.append("g")
+         .attr("transform", "translate(0, -50)")
+         .append("rect")
+         .attr("x", 0)
+         .attr("y", 0)
+         .attr("height", 30)
+         .style("fill", "grey")
+         .attr("width", xScale(10, 10));
+
+        // Happiness
+        g.append("g")
+         .attr("transform", "translate(0, -50)")
+         .append("rect")
+         .attr("x", 0)
+         .attr("y", 0)
+         .attr("height", 30)
+         .style("fill", "red")
+         .transition()
+         .duration(700)
+         .ease(d3.easeExp)
+         .attr("width", (d) => xScale(countryData.Happiness, 10));
+
+        g.append("g")
+         .attr("transform", "translate(0, -25)")
+         .call(d3.axisBottom(d3.scaleLinear().range([0, width]).domain([0, 10])).ticks(5));
+
+        g.selectAll(".barBg")
+         .data(data)
+         .enter()
+         .append("rect")
+         .attr("class", "barBg")
+         .attr("id", (d) => d.variable)
+         .attr("x", 0)
+         .attr("height", yScale.bandwidth())
+         .attr("y", function (d) {
+             return yScale(d.variable);
+         })
+         .attr("width", function (d) {
+             return xScale(d.max, d.max);
+         });
 
         g.selectAll(".bar")
          .data(data)
          .enter().append("rect")
          .attr("class", "bar")
+         .attr("id", (d) => d.variable)
          .attr("x", 0)
          .attr("height", yScale.bandwidth())
          .attr("y", function (d) {
@@ -220,6 +305,34 @@ export function visualization(geoJson, opts) {
          .attr("width", function (d) {
              return xScale(d.value, d.max);
          });
+
+        g.selectAll(".value")
+         .data(data)
+         .enter()
+         .append("text")
+         .attr("class", "value")
+         .attr("x", (d) => 0)
+         .attr("y", (d) => yScale(d.variable) + 25)
+         .transition()
+         .duration(700)
+         .ease(d3.easeExp)
+            .attr("x", (d) =>
+            {
+                if (xScale(d.value, d.max) < 36) {
+                    return  xScale(d.value, d.max) + 15
+                } else {
+                    return xScale(d.value, d.max) - 35
+                }
+
+            })
+            .attr("y", (d) => yScale(d.variable) + 25)
+            .text((d) => Math.round(d.value * 100) / 100)
+            .style("font-size", "18px")
+            .style("fill", "white");
+
+        clickOnBar();
+
+
     }
 
     return render;

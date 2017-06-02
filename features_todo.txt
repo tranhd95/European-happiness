@@ -1,0 +1,15 @@
+
+
+
+Tooltip on hover
+    Country name
+    Score
+    Background color
+
+Gradient scale by categories
+
+Filter by regions
+    Average scores
+
+Show countries where
+    score is above average

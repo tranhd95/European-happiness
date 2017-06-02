@@ -34,3 +34,23 @@ svg {
 #infoBox > svg {
     border: none;
 }
+
+.barBg {
+    fill: grey;
+}
+
+yaxis text {
+    font-size: 19px;
+}
+
+.bar:hover {
+    cursor: pointer;
+}
+
+.barBg:hover {
+    cursor: pointer;
+}
+
+#mapContainer path:hover {
+    cursor:pointer;
+}
