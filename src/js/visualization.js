@@ -108,6 +108,9 @@ export function visualization(geoJson, opts) {
 
         mapSvgElement
             .selectAll("path")
+            .transition()
+            .duration(700)
+            .ease(d3.easeExp)
             .style("fill", function () {
                 let country = d3.select(this).attr('id');
                 let countryData = getCountryData(country);
