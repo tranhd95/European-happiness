@@ -12,7 +12,7 @@ let opts = {
 };
 
 let svg = d3.select("body")
-            .append("div").attr("id", "mapContainer")
+            .select("#mapContainer")
             .append("svg")
             .attr("viewBox", `0 0 ${opts.mapWidth} ${opts.mapHeight}`)
             .attr("preserveAspectRatio", "xMidYMid")

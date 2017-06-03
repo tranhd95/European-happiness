@@ -3,13 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <title>Europe map</title>
+    <link rel="stylesheet" href="src/css/kube.min.css">
     <link rel="stylesheet" href="dist/bundle.css"/>
-    <style></style>
 </head>
 <body>
-<script src="dist/bundle.js"></script>
-<div id="infoBox">
-    <h1 id="countryName"></h1>
+
+
+
+<div id="wrapper" style="margin: 100px">
+    <h1>European happiness</h1>
+    <blockquote>
+        <p>
+            Interactive geographic visualisation of happiness in each European country based
+            on <a href="http://worldhappiness.report/">worldhappiness.report</a> dataset.
+        </p>
+        <small>- by Tran Hai Duong 2017</small>
+    </blockquote>
+
+    <div class="row gutters">
+        <div class="col col-6 push-middle push-center" id="mapContainer"><script src="dist/bundle.js"></script></div>
+        <div class="col col-6 push-middle push-center">
+            <div id="infoBox">
+                <h1 id="countryName"></h1>
+                <div id="barChart"></div>
+                <p id="barHelp" class="text-center" style="display: none">Click on the bar for visual comparison.</p>
+            </div>
+        </div>
+        <em class="col col-6 push-middle push-center">Click on the country for more info. <br>Use mouse wheel for zooming or click and drag for panning.</em>
+    </div>
 </div>
+<footer class="text-center">Tran Hai Duong 2017</footer>
+
+
+
+
+
 </body>
 </html>

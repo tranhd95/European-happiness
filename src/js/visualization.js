@@ -14,6 +14,8 @@ export function visualization(geoJson, opts) {
     let mapSvgElement;
     let data;
     let maxValues;
+    let zoomableLayer;
+
 
     render.data = (d) => {
         data = d;
@@ -57,7 +59,8 @@ export function visualization(geoJson, opts) {
 
     // Draws the map
     function drawMap() {
-        mapSvgElement.selectAll("path")
+        zoomableLayer = mapSvgElement.append("g");
+        zoomableLayer.selectAll("path")
                   .data(geoJson.features)
                   .enter()
                   .append("path")
@@ -67,8 +70,15 @@ export function visualization(geoJson, opts) {
 
     // All event listeners
     function mapInteraction() {
+        zooming();
         clickEvents();
         hoverEvents();
+    }
+
+    function zooming() {
+        let zoom = d3.zoom()
+                     .on("zoom", () => zoomableLayer.attr("transform", d3.event.transform));
+        mapSvgElement.call(zoom);
     }
 
     // Event listeners for clicking events
@@ -92,9 +102,7 @@ export function visualization(geoJson, opts) {
     // Event listener for clicking on category bar (Happiness, Health, ...)
     function clickOnBar() {
         d3.select("#infoBox")
-            .selectAll(".barBg")
-            .on("click", onBarClickHandler);
-        d3.select("#infoBox").selectAll(".bar")
+            .selectAll(".barGroup")
             .on("click", onBarClickHandler);
     }
 
@@ -193,7 +201,7 @@ export function visualization(geoJson, opts) {
             d3.select("#countryName")
               .text(countryName + " NO DATA");
             // Remove previous country data
-            d3.select("#infoBox")
+            d3.select("#barChart")
               .select("svg")
               .remove();
             return;
@@ -209,7 +217,7 @@ export function visualization(geoJson, opts) {
         ];
 
         // Remove previous country data
-        d3.select("#infoBox")
+        d3.select("#barChart")
           .select("svg")
           .remove();
 
@@ -222,7 +230,7 @@ export function visualization(geoJson, opts) {
             .style("text-align", "center");
 
         // Add svg element to #infoBox
-        let svg = d3.select("#infoBox")
+        let svg = d3.select("#barChart")
                     .append("svg")
                     .attr("width", opts.infoBoxWidth)
                     .attr("height", opts.infoBoxHeight);
@@ -277,42 +285,40 @@ export function visualization(geoJson, opts) {
          .attr("transform", "translate(0, -25)")
          .call(d3.axisBottom(d3.scaleLinear().range([0, width]).domain([0, 10])).ticks(5));
 
-        g.selectAll(".barBg")
-         .data(data)
-         .enter()
-         .append("rect")
-         .attr("class", "barBg")
-         .attr("id", (d) => d.variable)
-         .attr("x", 0)
-         .attr("height", yScale.bandwidth())
-         .attr("y", function (d) {
-             return yScale(d.variable);
-         })
-         .attr("width", function (d) {
-             return xScale(d.max, d.max);
-         });
+        let groups = g.selectAll(".barBg")
+                      .data(data)
+                      .enter()
+                      .append("g")
+                      .attr("class", "barGroup")
+                      .attr("id", (d) => d.variable);
 
-        g.selectAll(".bar")
-         .data(data)
-         .enter().append("rect")
-         .attr("class", "bar")
-         .attr("id", (d) => d.variable)
-         .attr("x", 0)
-         .attr("height", yScale.bandwidth())
-         .attr("y", function (d) {
-             return yScale(d.variable);
-         })
-         .transition()
-         .duration(700)
-         .ease(d3.easeExp)
-         .attr("width", function (d) {
-             return xScale(d.value, d.max);
-         });
 
-        g.selectAll(".value")
-         .data(data)
-         .enter()
-         .append("text")
+         groups.append("rect")
+             .attr("class", "barBg")
+             .attr("x", 0)
+             .attr("height", yScale.bandwidth())
+             .attr("y", function (d) {
+                 return yScale(d.variable);
+             })
+             .attr("width", function (d) {
+                 return xScale(d.max, d.max);
+             });
+
+        groups.append("rect")
+             .attr("class", "bar")
+             .attr("x", 0)
+             .attr("height", yScale.bandwidth())
+             .attr("y", function (d) {
+                 return yScale(d.variable);
+             })
+             .transition()
+             .duration(700)
+             .ease(d3.easeExp)
+             .attr("width", function (d) {
+                 return xScale(d.value, d.max);
+             });
+
+        groups.append("text")
          .attr("class", "value")
          .attr("x", (d) => 0)
          .attr("y", (d) => yScale(d.variable) + 25)
@@ -332,6 +338,9 @@ export function visualization(geoJson, opts) {
             .text((d) => Math.round(d.value * 100) / 100)
             .style("font-size", "18px")
             .style("fill", "white");
+
+        d3.select("#barHelp")
+          .style("display", "block");
 
         clickOnBar();
 
