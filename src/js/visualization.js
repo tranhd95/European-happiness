@@ -33,11 +33,14 @@ export function visualization(geoJson, opts) {
             "Freedom": d3.max(data, (d) => {
                 return +d.Freedom;
             }),
-            "Corruption": d3.max(data, (d) => {
-                return +d.Corruption;
+            "Trust": d3.max(data, (d) => {
+                return +d.Trust;
             }),
             "Generosity": d3.max(data, (d) => {
                 return +d.Generosity;
+            }),
+            "Happiness": d3.max(data, (d) => {
+                return +d.Happiness;
             })
         };
 
@@ -61,11 +64,13 @@ export function visualization(geoJson, opts) {
     function drawMap() {
         zoomableLayer = mapSvgElement.append("g");
         zoomableLayer.selectAll("path")
-                  .data(geoJson.features)
-                  .enter()
-                  .append("path")
-                  .attr("d", d3.geoPath(projection))
-                  .attr("id", (d) => d.properties.name);
+                     .data(geoJson.features)
+                     .enter()
+                     .append("path")
+                     .attr("d", d3.geoPath(projection))
+                     .attr("id", (d) => d.properties.name);
+
+        gradient("Happiness");
     }
 
     // All event listeners
@@ -90,7 +95,7 @@ export function visualization(geoJson, opts) {
     // Event listener for clicking on specific country
     function clickOnCountry() {
         mapSvgElement.selectAll("path")
-                  .on("click", onCountryClickHandler);
+                     .on("click", onCountryClickHandler);
     }
 
     // Event handler for clicking on the country
@@ -102,18 +107,22 @@ export function visualization(geoJson, opts) {
     // Event listener for clicking on category bar (Happiness, Health, ...)
     function clickOnBar() {
         d3.select("#infoBox")
-            .selectAll(".barGroup")
-            .on("click", onBarClickHandler);
+          .selectAll(".barGroup")
+          .on("click", onBarClickHandler);
+        d3.select(".happinessBarGroup")
+          .on("click", onBarClickHandler);
+
     }
 
     // Event handler for clicking on the category bar
     function onBarClickHandler() {
         let barId = this.id;
-        fooMap(barId);
+        gradient(barId);
+        d3.select("#categorySelected")
+          .text("Selected category: " + barId);
     }
 
-    function fooMap(category) {
-
+    function gradient(category) {
         mapSvgElement
             .selectAll("path")
             .transition()
@@ -122,10 +131,13 @@ export function visualization(geoJson, opts) {
             .style("fill", function () {
                 let country = d3.select(this).attr('id');
                 let countryData = getCountryData(country);
-                if (countryData != null) {
+                if (countryData !== null) {
                     let value = countryData[category];
-                    value = value * 255 / maxValues[category];
-                    return "rgb(" + Math.round(value) + ", 0, 0)";
+
+                    let gradient = d3.scaleLinear()
+                                     .domain([0, maxValues[category]/2, maxValues[category]])
+                                     .range(["#e5f5e0", "#a1d99b", "#31a354"]);
+                    return gradient(value);
                 } else {
                     return "grey";
                 }
@@ -135,9 +147,7 @@ export function visualization(geoJson, opts) {
 
     // Highlights the selected country
     function highlightSelectedCountry(country) {
-
         resetFill();
-
         // Fill the country
         d3.select(country)
           .classed("selectedCountry", true);
@@ -168,8 +178,8 @@ export function visualization(geoJson, opts) {
     // Event handlers for hovering over the country
     function hoverOverCountry() {
         mapSvgElement.selectAll("path")
-                  .on("mouseover", hoverOverCountryHandler)
-                  .on("mouseout", hoverOutCountryHandler);
+                     .on("mouseover", hoverOverCountryHandler)
+                     .on("mouseout", hoverOutCountryHandler);
     }
 
     // Event handler for hovering over the country
@@ -177,8 +187,6 @@ export function visualization(geoJson, opts) {
 
         d3.select(this)
           .classed("hoverCountry", true);
-        //#TODO tooltip
-        let countryData = getCountryData(this.id);
     }
 
     // Event handler for hovering out of the country
@@ -190,14 +198,12 @@ export function visualization(geoJson, opts) {
     // Resets fill color of all countries
     function resetFill() {
         mapSvgElement.selectAll("path")
-                  .classed("selectedCountry", false)
-            .style("fill", null);
+                     .classed("selectedCountry", false);
     }
 
     function barChart(countryName, countryData) {
 
         if (countryData === null) {
-            //#TODO No data available case (Andorra, San Marino, Vatican, ...)
             d3.select("#countryName")
               .text(countryName + " NO DATA");
             // Remove previous country data
@@ -209,7 +215,7 @@ export function visualization(geoJson, opts) {
 
         let data = [
             {"variable": "Economy", "value": +countryData.Economy, "max": maxValues.Economy},
-            {"variable": "Corruption", "value": +countryData.Corruption, "max": maxValues.Corruption},
+            {"variable": "Trust", "value": +countryData.Trust, "max": maxValues.Trust},
             {"variable": "Generosity", "value": +countryData.Generosity, "max": maxValues.Generosity},
             {"variable": "Family", "value": +countryData.Family, "max": maxValues.Family},
             {"variable": "Health", "value": +countryData.Health, "max": maxValues.Health},
@@ -223,11 +229,15 @@ export function visualization(geoJson, opts) {
 
         // Happiness
         d3.select("#countryName")
-            .text(countryName)
-            .style("text-align", "center") //TODO css class
-            .append("p")
-            .text("Happiness score: " + countryData.Happiness)
-            .style("text-align", "center");
+          .text(countryName)
+          .style("padding-left", "100px")
+          .append("hr");
+
+        d3.select("#happinessScore")
+          .text("Happiness score: " + countryData.Happiness)
+          .style("text-align", "center")
+          .style("margin-top", "20px")
+          .style("margin-left", "80px");
 
         // Add svg element to #infoBox
         let svg = d3.select("#barChart")
@@ -241,9 +251,7 @@ export function visualization(geoJson, opts) {
 
         let yScale = d3.scaleBand()
                        .range([height, 0])
-                       .domain(data.map(function (d) {
-                           return d.variable;
-                       }))
+                       .domain(data.map((d) => d.variable))
                        .padding(0.1);
 
         let g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -259,27 +267,32 @@ export function visualization(geoJson, opts) {
          .style("font-size", "18px")
          .call(d3.axisLeft(yScale));
 
-        g.append("g")
-         .attr("transform", "translate(0, -50)")
-         .append("rect")
-         .attr("x", 0)
-         .attr("y", 0)
-         .attr("height", 30)
-         .style("fill", "grey")
-         .attr("width", xScale(10, 10));
+        let happinessBarGroup = g.append("g")
+                                 .attr("transform", "translate(0, -50)")
+                                 .attr("class", "happinessBarGroup")
+                                 .attr("id", "Happiness");
+
+
+        // Happiness background chart
+        happinessBarGroup
+            .append("rect")
+            .attr("class", "happinessBarBg")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("height", 30)
+            .attr("width", xScale(10, 10));
 
         // Happiness
-        g.append("g")
-         .attr("transform", "translate(0, -50)")
-         .append("rect")
-         .attr("x", 0)
-         .attr("y", 0)
-         .attr("height", 30)
-         .style("fill", "red")
-         .transition()
-         .duration(700)
-         .ease(d3.easeExp)
-         .attr("width", (d) => xScale(countryData.Happiness, 10));
+        happinessBarGroup
+            .append("rect")
+            .attr("class", "happinessBar")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("height", 30)
+            .transition()
+            .duration(700)
+            .ease(d3.easeExp)
+            .attr("width", () => xScale(countryData.Happiness, 10));
 
         g.append("g")
          .attr("transform", "translate(0, -25)")
@@ -293,53 +306,39 @@ export function visualization(geoJson, opts) {
                       .attr("id", (d) => d.variable);
 
 
-         groups.append("rect")
-             .attr("class", "barBg")
-             .attr("x", 0)
-             .attr("height", yScale.bandwidth())
-             .attr("y", function (d) {
-                 return yScale(d.variable);
-             })
-             .attr("width", function (d) {
-                 return xScale(d.max, d.max);
-             });
+        groups.append("rect")
+              .attr("class", "barBg")
+              .attr("x", 0)
+              .attr("height", yScale.bandwidth())
+              .attr("y", (d) => yScale(d.variable))
+              .attr("width", (d) => xScale(d.max, d.max));
 
         groups.append("rect")
-             .attr("class", "bar")
-             .attr("x", 0)
-             .attr("height", yScale.bandwidth())
-             .attr("y", function (d) {
-                 return yScale(d.variable);
-             })
-             .transition()
-             .duration(700)
-             .ease(d3.easeExp)
-             .attr("width", function (d) {
-                 return xScale(d.value, d.max);
-             });
+              .attr("class", "bar")
+              .attr("x", 0)
+              .attr("height", yScale.bandwidth())
+              .attr("y", (d) => yScale(d.variable))
+              .transition()
+              .duration(700)
+              .ease(d3.easeExp)
+              .attr("width", (d) => xScale(d.value, d.max));
 
         groups.append("text")
-         .attr("class", "value")
-         .attr("x", (d) => 0)
-         .attr("y", (d) => yScale(d.variable) + 25)
-         .transition()
-         .duration(700)
-         .ease(d3.easeExp)
-            .attr("x", (d) =>
-            {
-                if (xScale(d.value, d.max) < 36) {
-                    return  xScale(d.value, d.max) + 15
-                } else {
-                    return xScale(d.value, d.max) - 35
-                }
-
-            })
-            .attr("y", (d) => yScale(d.variable) + 25)
-            .text((d) => Math.round(d.value * 100) / 100)
-            .style("font-size", "18px")
-            .style("fill", "white");
+              .attr("class", "value")
+              .attr("x", (d) => 0)
+              .attr("y", (d) => yScale(d.variable) + 25)
+              .transition()
+              .duration(700)
+              .ease(d3.easeExp)
+              .attr("x", (d) => (xScale(d.value, d.max) < 36) ? xScale(d.value, d.max) + 15 : xScale(d.value, d.max) - 35)
+              .attr("y", (d) => yScale(d.variable) + 25)
+              .text((d) => Math.round(d.value * 100) / 100)
+              .style("font-size", "18px")
+              .style("fill", "black");
 
         d3.select("#barHelp")
+          .style("display", "block");
+        d3.select("#categorySelected")
           .style("display", "block");
 
         clickOnBar();

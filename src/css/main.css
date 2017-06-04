@@ -18,8 +18,12 @@ body {
 
 path {
     fill: gray;
-    stroke: #a6a6a6;
+    stroke: white;
     stroke-width: 0.5px;
+}
+
+path:hover {
+    fill:orange!important;
 }
 
 .hoverCountry {
@@ -27,7 +31,8 @@ path {
 }
 
 .selectedCountry {
-    fill: blue;
+    stroke-width: 2px;
+    stroke: orange;
 }
 
 #infoBox {
@@ -43,9 +48,18 @@ path {
     border: none;
 }
 
-yaxis text {
+.yaxis text {
     font-size: 19px;
 }
+
+.bar {
+    fill: #35a078;
+}
+
+.barBg {
+    fill: #cfcfcf;
+}
+
 
 .bar:hover {
     cursor: pointer;
@@ -55,18 +69,26 @@ yaxis text {
     cursor: pointer;
 }
 
-.barGroup:hover {
-    fill: red;
+.barGroup:hover .barBg{
+    opacity: 0.5;
 }
 
-.barGroup:hover .barBg {
-    fill: red;
+.barGroup:hover .bar{
+    opacity: 0.5;
 }
-
-.barBg {
-    fill: grey;
-}
-
 #mapContainer path:hover {
     cursor:pointer;
+}
+
+.happinessBar {
+    fill: orange;
+}
+
+.happinessBarBg {
+    fill: #cfcfcf;
+}
+
+.happinessBarGroup:hover .happinessBar, .happinessBarGroup:hover .happinessBarBg {
+    cursor: pointer;
+    opacity: 0.5;
 }
